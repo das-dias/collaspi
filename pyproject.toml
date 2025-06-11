@@ -1,0 +1,33 @@
+[project]
+name = "collaspi"
+version = "0.1.50"
+description = "Speed up Post-(Extracted) Layout simulations with Collaspi! Speed up by lumping adjacent parasitic cap/resistors together into a T-model RC-wire for netlist reduction."
+readme = "README.md"
+authors = [
+    { name = "das-dias", email = "das.dias6@gmail.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "docopt>=0.6.2",
+    "networkx>=3.4.2",
+    "pathlib>=1.0.1",
+    "regex>=2024.11.6",
+    "tqdm>=4.67.1",
+]
+
+[project.optional-dependencies]
+githubpyspice = [
+    #"PySpice @ git+https://github.com/PySpice-org/PySpice.git@master"
+    "PySpice @ git+https://github.com/das-dias/PySpice.git@master"
+]
+
+[project.scripts]
+cspi = "collaspi:main"
+collaspi = "collaspi:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
