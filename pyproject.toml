@@ -2,10 +2,18 @@
 name = "collaspi"
 version = "0.1.50"
 description = "Speed up Post-(Extracted) Layout simulations with Collaspi! Speed up by lumping adjacent parasitic cap/resistors together into a T-model RC-wire for netlist reduction."
+license = { file = "LICENSE" }
 readme = "README.md"
 authors = [
     { name = "das-dias", email = "das.dias6@gmail.com" }
 ]
+keywords = [
+    'post-layout',
+    'acceleration',
+    'simulation',
+    'eda'
+]
+
 requires-python = ">=3.10"
 dependencies = [
     "docopt>=0.6.2",
@@ -14,6 +22,12 @@ dependencies = [
     "regex>=2024.11.6",
     "tqdm>=4.67.1",
 ]
+
+[project.urls]
+Homepage = "https://github.com/das-dias/collaspi"
+Repository = "https://github.com/das-dias/collaspi"
+Issues = "https://github.com/das-dias/collaspi/issues"
+Documentation = "https://github.com/das-dias/collaspi"
 
 [project.optional-dependencies]
 githubpyspice = [
