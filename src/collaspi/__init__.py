@@ -403,7 +403,8 @@ def main():
         cfg.maxr = spice_to_float(args['--maxr'])
         
     #netlist = pre_process_netlist(path=input_file, source=None)
-    netlist = list(SpiceParser(path=input_file).build_circuit().subcircuits)[0]
+    netlist = list(SpiceParser(path=input_file).subcircuits)[0]
+    netlist = netlist.build()
     RG, CCG = build_rcc_graph(netlist)
     # assert if RG is not empty
     # when RG is empty, the extracted netlist used C or C+CC options,
@@ -464,10 +465,7 @@ if __name__ == "__main__":
     
     with open(output_file, 'w') as f:
         f.write('Post-Processed by Collaspi\n'+str(collapsed_netlist))
-    print(f"Collapsed netlist written to {output_file}")
-    print()
-    print("Note: For Cadence Vivado integration, remove '.title' statement in the generated lumped netlist.")
-    
+    print(f"Collapsed netlist written to {output_file}\n")
     print("Done! :)")
     
     #pprint(str(pre_process_netlist('./data/testrcc.pex.netlist')))
