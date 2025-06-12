@@ -384,6 +384,9 @@ def test():
     print("All tests passed!")
     
 def main():
+    from datetime import datetime
+    current_time = datetime.now()
+    formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
     args = docopt(__doc__, version=f"Collaspi v{__version__}")
     if '--test' in args and args['--test']:
         print("Running tests...")
@@ -418,17 +421,19 @@ def main():
     if report:
         output_dir = output_file.parent
         with open(output_dir / 'report.log', 'w') as f:
+            f.write(formatted_time + ' - ' + str(input_file) + '\n')
             f.write('Critical parasitics: \n')
             for node in report:
                 f.write(f'{node}: {report[node]}\n')
 
     
     with open(output_file, 'w') as f:
-        f.write('*Post-Processed by Collaspi\n'+str(collapsed_netlist))
+        
+        f.write('*Post-Processed by Collaspi\n')
+        f.write('*'+formatted_time+' - '+str(input_file)+ '\n')
+        f.write(str(collapsed_netlist))
     print(f"Collapsed netlist written to {output_file}")
     print()
-    print("Note: For Cadence Vivado integration, remove '.title' statement in the generated lumped netlist.")
-    
     print("Done! :)")
     # TODO: add support for reducing parallel and series MOSFET devices
 
