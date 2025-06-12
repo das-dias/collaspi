@@ -134,7 +134,7 @@ wheels = [
 
 [[package]]
 name = "collaspi"
-version = "0.1.76"
+version = "0.1.79"
 source = { editable = "." }
 dependencies = [
     { name = "docopt" },
@@ -142,6 +142,7 @@ dependencies = [
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "networkx", version = "3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pathlib" },
+    { name = "pyspice" },
     { name = "regex" },
     { name = "tqdm" },
 ]
@@ -151,15 +152,28 @@ githubpyspice = [
     { name = "pyspice" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "collaspi" },
+    { name = "pyspice" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "docopt", specifier = ">=0.6.2" },
     { name = "halo", specifier = ">=0.0.31" },
     { name = "networkx", specifier = ">=3.4.2" },
     { name = "pathlib", specifier = ">=1.0.1" },
-    { name = "pyspice", marker = "extra == 'githubpyspice'", git = "https://github.com/das-dias/PySpice.git?rev=master" },
+    { name = "pyspice", git = "https://github.com/das-dias/PySpice.git?rev=a08a6f7a16bb23e07baddaa77e0d9d5687171a64" },
+    { name = "pyspice", marker = "extra == 'githubpyspice'", git = "https://github.com/das-dias/PySpice.git?rev=a08a6f7a16bb23e07baddaa77e0d9d5687171a64" },
     { name = "regex", specifier = ">=2024.11.6" },
     { name = "tqdm", specifier = ">=4.67.1" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "collaspi", editable = "." },
+    { name = "pyspice", git = "https://github.com/das-dias/PySpice.git?rev=a08a6f7a16bb23e07baddaa77e0d9d5687171a64" },
 ]
 
 [[package]]
@@ -744,7 +758,7 @@ wheels = [
 [[package]]
 name = "pyspice"
 version = "1.5"
-source = { git = "https://github.com/das-dias/PySpice.git?rev=master#22636be2eb57dde4257ab65053757a0a5e5014a0" }
+source = { git = "https://github.com/das-dias/PySpice.git?rev=a08a6f7a16bb23e07baddaa77e0d9d5687171a64#a08a6f7a16bb23e07baddaa77e0d9d5687171a64" }
 dependencies = [
     { name = "cffi" },
     { name = "matplotlib" },
