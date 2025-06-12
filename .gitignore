@@ -6,6 +6,10 @@ dist/
 wheels/
 *.egg-info
 
+# nuitka compiler generated files
+./collaspi.build
+./collaspi.dist
+
 # Virtual environments
 .venv
 data

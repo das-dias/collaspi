@@ -66,6 +66,8 @@ def spice_to_float(val):
             return float(val[:-len(suffix)]) * suffixes[suffix]
     return float(val)
 
+# Deprecated: this function is not required when building subcircuit from 
+# Calibre PEX 'DSPF' extracted net file format.
 def pre_process_netlist(path: Optional[Union[Path, str]]=None, source: Optional[str]=None) -> Union[Circuit, SubCircuit]:
     """Pre-process the netlist to ensure it is in a suitable format for analysis."""
     netlist: str = None
@@ -399,8 +401,8 @@ def main(argv=None):
     if args.get('--maxr'):
         cfg.maxr = spice_to_float(args['--maxr'])
         
-    netlist = pre_process_netlist(path=input_file, source=None)
-    #netlist = SpiceParser(path=input_file).build_circuit()
+    #netlist = pre_process_netlist(path=input_file, source=None)
+    netlist = SpiceParser(path=input_file).build_circuit()
     RG, CCG = build_rcc_graph(netlist)
     # assert if RG is not empty
     # when RG is empty, the extracted netlist used C or C+CC options,
@@ -437,4 +439,5 @@ __all__ = [
     build_rcc_graph,
     build_lumped_elements_graphs,
     build_collapsed_netlist,
+    main
 ]
