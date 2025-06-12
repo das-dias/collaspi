@@ -1,6 +1,6 @@
 [project]
 name = "collaspi"
-version = "0.1.70"
+version = "0.1.72"
 description = "Speed up Post-(Extracted) Layout simulations with Collaspi! Speed up by lumping adjacent parasitic cap/resistors together into a T-model RC-wire for netlist reduction."
 license = { file = "LICENSE" }
 readme = "README.md"

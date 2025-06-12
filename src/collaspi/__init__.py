@@ -424,7 +424,7 @@ def main():
 
     
     with open(output_file, 'w') as f:
-        f.write(str(collapsed_netlist)+'.END')
+        f.write('*Post-Processed by Collaspi\n'+str(collapsed_netlist))
     print(f"Collapsed netlist written to {output_file}")
     print()
     print("Note: For Cadence Vivado integration, remove '.title' statement in the generated lumped netlist.")
@@ -464,7 +464,7 @@ if __name__ == "__main__":
 
     
     with open(output_file, 'w') as f:
-        f.write('Post-Processed by Collaspi\n'+str(collapsed_netlist))
+        f.write('*Post-Processed by Collaspi\n'+str(collapsed_netlist))
     print(f"Collapsed netlist written to {output_file}\n")
     print("Done! :)")
     
