@@ -70,6 +70,7 @@ def spice_to_float(val):
 # Calibre PEX 'DSPF' extracted net file format.
 def pre_process_netlist(path: Optional[Union[Path, str]]=None, source: Optional[str]=None) -> Union[Circuit, SubCircuit]:
     """Pre-process the netlist to ensure it is in a suitable format for analysis."""
+    raise DeprecationWarning('This function is no longer required.')
     netlist: str = None
     if path is not None:
         path = Path(path)
@@ -440,8 +441,9 @@ if __name__ == "__main__":
     
     cfg = ReportConfig()
         
-    #netlist = pre_process_netlist(path=input_file, source=None)
-    netlist = list(SpiceParser(path=input_file).build_circuit().subcircuits)[0]
+    #netlist = subckt_to_ckt(path=input_file, source=None)
+    netlist = list(SpiceParser(path=input_file).subcircuits)[0]
+    netlist = netlist.build()
     RG, CCG = build_rcc_graph(netlist)
     # assert if RG is not empty
     # when RG is empty, the extracted netlist used C or C+CC options,
@@ -461,7 +463,7 @@ if __name__ == "__main__":
 
     
     with open(output_file, 'w') as f:
-        f.write(str(collapsed_netlist)+'.END')
+        f.write('Post-Processed by Collaspi\n'+str(collapsed_netlist))
     print(f"Collapsed netlist written to {output_file}")
     print()
     print("Note: For Cadence Vivado integration, remove '.title' statement in the generated lumped netlist.")
