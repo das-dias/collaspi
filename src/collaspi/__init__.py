@@ -170,6 +170,11 @@ def build_rcc_graph(netlist: Union[Circuit, SubCircuit]) -> Tuple[Graph, Graph]:
                 CCG.edges[elem.nodes[0], elem.nodes[1]]['weight'] = c + spice_to_float(capacitance)
             else:
                 CCG.add_edge(elem.nodes[0], elem.nodes[1], name=elem.name, weight=spice_to_float(capacitance))
+        else: # is instance / device.
+            # mark device nodes as critical, so that they are never collapsed/removed
+            for node in elem.nodes:
+                RG.nodes[node]['device-port']=True
+                CCG.nodes[node]['device-port']=True
     return RG, CCG
 
 
@@ -183,6 +188,12 @@ def build_lumped_elements_graphs(RG: Graph, CCG: Graph) -> Dict[str, Tuple[Graph
         edge_nodes = periphery(net)
         betweeness_centrality_score = betweenness_centrality(net, normalized=True, endpoints=False)
         center_node = max(betweeness_centrality_score, key=betweeness_centrality_score.get)
+        # add device-port nodes to the net's edge nodes
+        edge_nodes.extend([node for node in net.nodes if net.nodes[node].get('device-port')])
+        edge_nodes = list(set(edge_nodes))
+        if center_node in edge_nodes:
+            edge_nodes.remove(center_node)
+        
         r_index = 0
         for edge_node in edge_nodes:
           if edge_node == center_node: continue
