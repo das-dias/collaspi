@@ -5,7 +5,7 @@ __doc__ = """
 Collaspi: Post-(Extracted) Layout Simulations Speed-Up through Netlist Reduction.
 
 Usage:
-    collaspi <netlist_file> <collapsed_netlist_file>
+    collaspi <netlist_file> <collapsed_netlist_file> [--maxr=MAX_RESISTANCE] [--maxc=MAX_CAPACITANCE]
     collaspi [--test]
     collaspi --version
     collaspi --help
@@ -20,7 +20,7 @@ from tqdm import tqdm, trange
 
 from pathlib import Path
 from typing import Dict, Optional, Union, Tuple
-from collections import defaultdict
+from collections import defaultdict, UserDict
 #from itertools import product #combinations
 from networkx import (
     Graph, 
@@ -36,15 +36,29 @@ from PySpice.Spice.Netlist import Circuit, SubCircuit
 from PySpice.Spice.Parser import SpiceParser
 from PySpice.Spice.BasicElement import Resistor, Capacitor, BehavioralResistor, BehavioralCapacitor
 
-def spice_to_float(val):
-    if not isinstance(val, str):
-        return float(val)
-    suffixes = {
+
+class Suffix(UserDict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+_suffix = Suffix({
         't': 1e12, 'g': 1e9, 'meg': 1e6, 'k': 1e3,
         'm': 1e-3, 'u': 1e-6, 'n': 1e-9,
         'p': 1e-12, 'f': 1e-15, 'M': 1e6, 'K': 1e3,
         'G': 1e9, 'T': 1e12, 'P': 1e15
-    }
+    })
+
+class ReportConfig(object):
+    maxr: Optional[float]
+    maxc: Optional[float]
+    unitr = 1.0
+    unitc = _suffix['f']
+
+def spice_to_float(val):
+    if not isinstance(val, str):
+        return float(val)
+    
+    suffixes = _suffix
 
     val = val.strip().lower()
     for suffix in sorted(suffixes, key=len, reverse=True):
@@ -192,6 +206,7 @@ def build_collapsed_netlist(
     netlist: Union[Circuit, SubCircuit], 
     CCG_lumped_map: Dict[Tuple, float], 
     RG_lumped_nets: Dict[str, Tuple[Graph, Graph]],
+    cfg: Optional[ReportConfig] = None,
     rounding: Optional[int] = 4
     ) -> Union[SubCircuit, Circuit]:
     # create a copy of the analysed netlist
@@ -210,19 +225,34 @@ def build_collapsed_netlist(
     # count the total number of nodes in the circuit
     visited_cap = []
     r_index = 0
+    
+    critical_report = {}
+    
     for net in tqdm(RG_lumped_nets, desc="Building Lumped Resistance Netlist"):
         for edge in net.edges:
             # introduce intermediate node
+            r = net.edges[edge]['weight']
             collapsed_netlist.R(f'{r_index}', \
-                edge[0].name, edge[1].name, round(net.edges[edge]['weight'], rounding))
+                edge[0].name, edge[1].name, round(r, rounding))
+            if cfg:
+                if hasattr(cfg, 'maxr'):
+                    if r > cfg.maxr:
+                        critical_report.update({
+                            f'R{r_index}': (edge[0].name, edge[1].name, round(r, rounding))
+                        })
             r_index += 1
-            
     c_index = 0
     for cap in tqdm(CCG_lumped_map, desc="Building Lumped Capacitance Netlist"):
         if cap not in visited_cap:
             visited_cap.append(cap)
             collapsed_netlist.C(f'{c_index}', \
                 cap[0].name, cap[1].name, CCG_lumped_map[cap])
+            if cfg:
+                if hasattr(cfg, 'maxc'):
+                    if CCG_lumped_map[cap] > cfg.maxc:
+                        critical_report.update({
+                            f'C{c_index}': (cap[0].name, cap[1].name, CCG_lumped_map[cap])
+                        })
             c_index += 1
     
     # copy the remaining elements in the original spice into the 
@@ -240,7 +270,7 @@ def build_collapsed_netlist(
         collapsed_netlist.subcircuit(subckt)
     # copy the global nodes from the original netlist
     # copy the parameters from the original netlist
-    return collapsed_netlist
+    return collapsed_netlist, critical_report
     
     
 def test_build_rcc_graph():
@@ -362,8 +392,14 @@ def main(argv=None):
     output_file = Path(args['<collapsed_netlist_file>'])
     if not input_file.exists():
         raise FileNotFoundError(f"Input file {input_file} does not exist.")
+    
+    cfg = ReportConfig()
+    if args.get('--maxc'):
+        cfg.maxc = spice_to_float(args['--maxc'])
+    if args.get('--maxr'):
+        cfg.maxr = spice_to_float(args['--maxr'])
+        
     netlist = pre_process_netlist(path=input_file, source=None)
-
     #netlist = SpiceParser(path=input_file).build_circuit()
     RG, CCG = build_rcc_graph(netlist)
     # assert if RG is not empty
@@ -373,7 +409,16 @@ def main(argv=None):
         raise ValueError("The resistance graph is empty. C+CC PEX extraction already provides lumped capacitance (maximally reduced) netlists. Please check the input netlist to result from R, RC or RCC PEX extraction.")
     
     RG_sub_nets_map, CCG_lumped_map = build_lumped_elements_graphs(RG, CCG)
-    collapsed_netlist = build_collapsed_netlist(netlist, CCG_lumped_map, RG_sub_nets_map)
+    collapsed_netlist, report = build_collapsed_netlist(netlist, CCG_lumped_map, RG_sub_nets_map, cfg=cfg)
+    
+    if report:
+        output_dir = output_file.parent
+        with open(output_dir / 'report.log', 'w') as f:
+            f.write('Critical parasitics: \n')
+            for node in report:
+                f.write(f'{node}: {report[node]}\n')
+
+    
     with open(output_file, 'w') as f:
         f.write(str(collapsed_netlist)+'.END')
     print(f"Collapsed netlist written to {output_file}")
