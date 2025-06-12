@@ -382,8 +382,8 @@ def test():
     test_build_collapsed_netlist()
     print("All tests passed!")
     
-def main(argv=None):
-    args = docopt(__doc__, version=f"Collaspi v{__version__}") or argv
+def main():
+    args = docopt(__doc__, version=f"Collaspi v{__version__}")
     if '--test' in args and args['--test']:
         print("Running tests...")
         test()
@@ -402,7 +402,7 @@ def main(argv=None):
         cfg.maxr = spice_to_float(args['--maxr'])
         
     #netlist = pre_process_netlist(path=input_file, source=None)
-    netlist = SpiceParser(path=input_file).build_circuit()
+    netlist = list(SpiceParser(path=input_file).build_circuit().subcircuits)[0]
     RG, CCG = build_rcc_graph(netlist)
     # assert if RG is not empty
     # when RG is empty, the extracted netlist used C or C+CC options,
@@ -432,12 +432,47 @@ def main(argv=None):
 
 if __name__ == "__main__":
     from pprint import pprint
-    pprint(str(pre_process_netlist('./data/testrcc.pex.netlist')))
+    
+    input_file = Path('./data/tv_dynamic_ls.pex.netlist').resolve()
+    output_file = Path('./data/output.pex.netlist')
+    if not input_file.exists():
+        raise FileNotFoundError(f"Input file {input_file} does not exist.")
+    
+    cfg = ReportConfig()
+        
+    #netlist = pre_process_netlist(path=input_file, source=None)
+    netlist = list(SpiceParser(path=input_file).build_circuit().subcircuits)[0]
+    RG, CCG = build_rcc_graph(netlist)
+    # assert if RG is not empty
+    # when RG is empty, the extracted netlist used C or C+CC options,
+    # which means that all extracted capacitances are already lumped
+    if RG.number_of_nodes() == 0:
+        raise ValueError("The resistance graph is empty. C+CC PEX extraction already provides lumped capacitance (maximally reduced) netlists. Please check the input netlist to result from R, RC or RCC PEX extraction.")
+    
+    RG_sub_nets_map, CCG_lumped_map = build_lumped_elements_graphs(RG, CCG)
+    collapsed_netlist, report = build_collapsed_netlist(netlist, CCG_lumped_map, RG_sub_nets_map, cfg=cfg)
+    
+    if report:
+        output_dir = output_file.parent
+        with open(output_dir / 'report.log', 'w') as f:
+            f.write('Critical parasitics: \n')
+            for node in report:
+                f.write(f'{node}: {report[node]}\n')
+
+    
+    with open(output_file, 'w') as f:
+        f.write(str(collapsed_netlist)+'.END')
+    print(f"Collapsed netlist written to {output_file}")
+    print()
+    print("Note: For Cadence Vivado integration, remove '.title' statement in the generated lumped netlist.")
+    
+    print("Done! :)")
+    
+    #pprint(str(pre_process_netlist('./data/testrcc.pex.netlist')))
     #test()
 
 __all__ = [
     build_rcc_graph,
     build_lumped_elements_graphs,
     build_collapsed_netlist,
-    main
 ]
