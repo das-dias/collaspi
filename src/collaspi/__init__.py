@@ -396,6 +396,8 @@ def test():
     
 def main():
     from datetime import datetime
+    from halo import Halo
+    
     current_time = datetime.now()
     formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
     args = docopt(__doc__, version=f"Collaspi v{__version__}")
@@ -419,15 +421,20 @@ def main():
     #netlist = pre_process_netlist(path=input_file, source=None)
     netlist = list(SpiceParser(path=input_file).subcircuits)[0]
     netlist = netlist.build()
-    RG, CCG = build_rcc_graph(netlist)
+    with Halo(text='Converting Netlist to Graph', spinner='line'):
+        RG, CCG = build_rcc_graph(netlist)
+    
     # assert if RG is not empty
     # when RG is empty, the extracted netlist used C or C+CC options,
     # which means that all extracted capacitances are already lumped
     if RG.number_of_nodes() == 0:
         raise ValueError("The resistance graph is empty. C+CC PEX extraction already provides lumped capacitance (maximally reduced) netlists. Please check the input netlist to result from R, RC or RCC PEX extraction.")
     
-    RG_sub_nets_map, CCG_lumped_map = build_lumped_elements_graphs(RG, CCG)
-    collapsed_netlist, report = build_collapsed_netlist(netlist, CCG_lumped_map, RG_sub_nets_map, cfg=cfg)
+    with Halo(text='Building Lumped Elements Graph', spinner='line'):
+        RG_sub_nets_map, CCG_lumped_map = build_lumped_elements_graphs(RG, CCG)
+    
+    with Halo(text='Building Reduced Netlist', spinner='line'):
+        collapsed_netlist, report = build_collapsed_netlist(netlist, CCG_lumped_map, RG_sub_nets_map, cfg=cfg)
     
     if report:
         output_dir = output_file.parent
@@ -450,6 +457,7 @@ def main():
 
 if __name__ == "__main__":
     from pprint import pprint
+    from halo import Halo
     
     input_file = Path('./data/tv_dynamic_ls.pex.netlist').resolve()
     output_file = Path('./data/output.pex.netlist')
@@ -461,15 +469,20 @@ if __name__ == "__main__":
     #netlist = subckt_to_ckt(path=input_file, source=None)
     netlist = list(SpiceParser(path=input_file).subcircuits)[0]
     netlist = netlist.build()
-    RG, CCG = build_rcc_graph(netlist)
+    with Halo(text='Converting Netlist to Graph', spinner='line'):
+        RG, CCG = build_rcc_graph(netlist)
+    
     # assert if RG is not empty
     # when RG is empty, the extracted netlist used C or C+CC options,
     # which means that all extracted capacitances are already lumped
     if RG.number_of_nodes() == 0:
         raise ValueError("The resistance graph is empty. C+CC PEX extraction already provides lumped capacitance (maximally reduced) netlists. Please check the input netlist to result from R, RC or RCC PEX extraction.")
     
-    RG_sub_nets_map, CCG_lumped_map = build_lumped_elements_graphs(RG, CCG)
-    collapsed_netlist, report = build_collapsed_netlist(netlist, CCG_lumped_map, RG_sub_nets_map, cfg=cfg)
+    with Halo(text='Building Lumped Elements Graph', spinner='line'):
+        RG_sub_nets_map, CCG_lumped_map = build_lumped_elements_graphs(RG, CCG)
+    
+    with Halo(text='Building Reduced Netlist', spinner='line'):
+        collapsed_netlist, report = build_collapsed_netlist(netlist, CCG_lumped_map, RG_sub_nets_map, cfg=cfg)
     
     if report:
         output_dir = output_file.parent

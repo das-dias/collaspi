@@ -1,6 +1,6 @@
 [project]
 name = "collaspi"
-version = "0.1.76"
+version = "0.1.78"
 description = "Speed up Post-(Extracted) Layout simulations with Collaspi! Speed up by lumping adjacent parasitic cap/resistors together into a T-model RC-wire for netlist reduction."
 license = { file = "LICENSE" }
 readme = "README.md"
@@ -17,6 +17,7 @@ keywords = [
 requires-python = ">=3.10"
 dependencies = [
     "docopt>=0.6.2",
+    "halo>=0.0.31",
     "networkx>=3.4.2",
     "pathlib>=1.0.1",
     "regex>=2024.11.6",
